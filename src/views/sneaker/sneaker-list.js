@@ -12,27 +12,28 @@ import {
   Tag,
   Row,
   Col,
+  notification,
   Card,
-  Modal,
   Statistic,
-  List,
-  Avatar
+  Select
 } from 'antd'
 import {
   SearchOutlined,
   MinusCircleOutlined,
   SaveOutlined,
-  DeleteOutlined,
-  PlusOutlined
+  DeleteOutlined
 } from '@ant-design/icons'
 
-import { updateBrand, deleteBrand } from './../../services/brand-service'
+import { getBrandList } from './../../services/brand-service'
 import {
-  getSneakerByBrandId,
+  deleteSneaker,
+  updateSneaker,
   getSneakerList
 } from './../../services/sneaker-service'
 
 import * as moment from 'moment'
+
+const { Option } = Select
 
 const EditableCell = ({
   editing,
@@ -42,17 +43,32 @@ const EditableCell = ({
   record,
   index,
   children,
+  brandListData,
   ...restProps
 }) => {
-  const inputNode =
-    inputType === 'checkbox' ? (
-      <Checkbox checked={record.IS_DELETED ? true : false} />
-    ) : (
-      <Input />
-    )
-  return (
-    <td {...restProps}>
-      {editing ? (
+  var inputNode = ''
+  switch (inputType) {
+    case 'checkbox':
+      inputNode = (
+        <Form.Item
+          name={dataIndex}
+          valuePropName="checked"
+          style={{
+            margin: 0
+          }}
+          rules={[
+            {
+              required: true,
+              message: `Please Input ${title}!`
+            }
+          ]}
+        >
+          <Checkbox />
+        </Form.Item>
+      )
+      break
+    case 'input':
+      inputNode = (
         <Form.Item
           name={dataIndex}
           style={{
@@ -65,42 +81,51 @@ const EditableCell = ({
             }
           ]}
         >
-          {inputNode}
+          <Input />
         </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  )
+      )
+      break
+    case 'select':
+      inputNode = (
+        <Form.Item
+          name={dataIndex}
+          style={{
+            margin: 0
+          }}
+          rules={[
+            {
+              required: true,
+              message: `Please Input ${title}!`
+            }
+          ]}
+        >
+          <Select placeholder="Select a brand" allowClear>
+            {brandListData.map((item) => {
+              return (
+                <Option key={item.ID} value={item.ID}>
+                  {item.TITLE}
+                </Option>
+              )
+            })}
+          </Select>
+        </Form.Item>
+      )
+      break
+    default:
+      break
+  }
+  return <td {...restProps}>{editing ? inputNode : children}</td>
 }
 
 const SneakerList = () => {
   const [form] = Form.useForm()
   const [data, setData] = useState([])
+  const [brandListData, setBrandListData] = useState([])
   const [editingKey, setEditingKey] = useState('')
   const [loading, setLoading] = useState(false)
-  const [modalLoading, setModalLoading] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [modalSneaker, setModalSneaker] = useState({})
-  const [modalData, setModalData] = useState([])
 
-  const showModal = async (key) => {
-    const { data } = await getSneakerByBrandId(key.ID)
-    setModalData(data.result)
-    setModalSneaker(key)
-    setModalVisible(true)
-  }
-
-  const handleOk = () => {
-    setModalLoading(true)
-    setTimeout(() => {
-      setModalLoading(false)
-      setModalVisible(false)
-    }, 3000)
-  }
-
-  const handleCancel = () => {
-    setModalVisible(false)
+  const gridStyle = {
+    width: '100%'
   }
 
   const isEditing = (record) => record.ID === editingKey
@@ -116,43 +141,90 @@ const SneakerList = () => {
 
   const getList = async () => {
     setLoading(true)
-    const response = await getSneakerList()
-    setData(response.data.result)
-    setLoading(false)
+    const { data } = await getSneakerList()
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: 'Sneaker list get successfully!',
+        placement: 'topLeft'
+      })
+      setData(data.result)
+      setLoading(false)
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
+  }
+
+  const getBrand = async () => {
+    const { data } = await getBrandList()
+    if (data.isSuccess) {
+      setBrandListData(data.result)
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
   }
 
   useEffect(() => {
     getList()
+    getBrand()
   }, [])
 
   const deleteData = async (key) => {
     setLoading(true)
-    const response = await deleteBrand(key, 'ncmttnynk')
-    if (response.data.isSuccess) {
+    const { data } = await deleteSneaker(key, 'ncmttnynk')
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: 'Sneaker deleted succesfully!',
+        placement: 'topLeft'
+      })
       getList()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
     }
     setLoading(false)
   }
 
-  const gridStyle = {
-    width: '100%'
-  }
-
   const save = async (key) => {
     setLoading(true)
-
     const row = await form.validateFields()
-
+    console.log(row)
     const putData = {
-      ID: key,
+      ID: key.ID,
       TITLE: row.TITLE,
+      COLOR: row.COLOR,
+      BRAND_ID: row['BRAND.TITLE'],
       MODIFIED_BY: row.MODIFIED_BY,
-      IS_DELETED: false
+      IS_DELETED: row.IS_DELETED
     }
-    const response = await updateBrand(putData)
-    if (response.data.isSuccess) {
+    const { data } = await updateSneaker(putData)
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: `${row.TITLE} updated successfully!`,
+        placement: 'topLeft'
+      })
       getList()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
     }
+    setLoading(false)
     setEditingKey('')
   }
   const columns = [
@@ -161,32 +233,37 @@ const SneakerList = () => {
       dataIndex: 'ID',
       editable: false,
       key: 'ID',
-      defaultSortOrder: 'ascend',
-      sorter: (a, b) => a.ID - b.ID
+      sorter: (a, b) => a.ID - b.ID,
+      width: '5%',
+      align: 'center'
     },
     {
       title: 'TITLE',
       dataIndex: 'TITLE',
       editable: true,
-      key: 'TITLE'
+      key: 'TITLE',
+      align: 'center'
     },
     {
       title: 'COLOR',
       dataIndex: 'COLOR',
       editable: true,
-      key: 'COLOR'
+      key: 'COLOR',
+      align: 'center'
     },
     {
       title: 'BRAND',
       dataIndex: 'BRAND.TITLE',
       editable: true,
-      key: 'BRAND.TITLE'
+      key: 'BRAND',
+      align: 'center'
     },
     {
       title: 'CREATED BY',
       dataIndex: 'CREATED_BY',
       editable: false,
-      key: 'CREATED_BY'
+      key: 'CREATED_BY',
+      align: 'center'
     },
     {
       title: 'CREATED DATE',
@@ -194,19 +271,19 @@ const SneakerList = () => {
       render: (_, record) => {
         return (
           <span>
-            {moment(new Date(record.CREATED_DATE)).format(
-              'DD.MM.YYYY, h:mm:ss'
-            )}
+            {moment(new Date(record.CREATED_DATE)).format('DD.MM.YYYY')}
           </span>
         )
       },
-      key: 'CREATED_DATE'
+      key: 'CREATED_DATE',
+      align: 'center'
     },
     {
       title: 'MODIFIED BY',
       dataIndex: 'MODIFIED_BY',
       editable: true,
-      key: 'MODIFIED_BY'
+      key: 'MODIFIED_BY',
+      align: 'center'
     },
     {
       title: 'MODIFIED DATE',
@@ -215,23 +292,23 @@ const SneakerList = () => {
         return (
           <span>
             {record.MODIFIED_DATE
-              ? moment(new Date(record.MODIFIED_DATE)).format(
-                  'DD.MM.YYYY, h:mm:ss'
-                )
+              ? moment(new Date(record.MODIFIED_DATE)).format('DD.MM.YYYY')
               : ''}
           </span>
         )
       },
-      key: 'MODIFIED_DATE'
+      key: 'MODIFIED_DATE',
+      align: 'center'
     },
     {
       title: 'IS DELETED',
       dataIndex: 'IS_DELETED',
       editable: true,
       render: (_, record) => {
-        return <Checkbox checked={record.IS_DELETED ? true : false} />
+        return <Checkbox checked={record.IS_DELETED} />
       },
-      key: 'IS_DELETED'
+      key: 'IS_DELETED',
+      align: 'center'
     },
     {
       title: 'ACTION',
@@ -243,7 +320,7 @@ const SneakerList = () => {
           <div key={Math.random()}>
             <Tooltip title="Save">
               <Button
-                onClick={() => save(record.ID)}
+                onClick={() => save(record)}
                 style={{
                   marginRight: 8
                 }}
@@ -291,19 +368,10 @@ const SneakerList = () => {
                 />
               </Tooltip>
             </Popconfirm>
-            <Tooltip title="Show Brand`s Sneakers">
-              <Button
-                key={Math.random()}
-                type="primary"
-                shape="circle"
-                disabled={editingKey !== '' || record.IS_DELETED}
-                icon={<PlusOutlined />}
-                onClick={() => showModal(record)}
-              />
-            </Tooltip>
           </Space>
         )
-      }
+      },
+      align: 'center'
     }
   ]
   const mergedColumns = columns.map((col) => {
@@ -315,17 +383,23 @@ const SneakerList = () => {
       ...col,
       onCell: (record) => ({
         record,
-        inputType: col.dataIndex === 'IS_DELETED' ? 'checkbox' : 'text',
+        inputType:
+          col.dataIndex === 'IS_DELETED'
+            ? 'checkbox'
+            : col.dataIndex === 'BRAND.TITLE'
+            ? 'select'
+            : 'input',
         dataIndex: col.dataIndex,
         title: col.title,
-        editing: isEditing(record)
+        editing: isEditing(record),
+        brandListData: brandListData
       })
     }
   })
   return (
     <div>
       <PageHeader
-        title="BRAND"
+        title="SNEAKER"
         className="site-page-header"
         tags={<Tag color="blue">List</Tag>}
         avatar={{
@@ -339,7 +413,7 @@ const SneakerList = () => {
       </PageHeader>
       <Row>
         <Col span={24}>
-          <Card title="Add New Brand" bordered={false}>
+          <Card title="Sneaker List" bordered={false}>
             <Card.Grid style={gridStyle}>
               <Form form={form} component={false}>
                 <Table
@@ -365,37 +439,6 @@ const SneakerList = () => {
           </Card>
         </Col>
       </Row>
-      <Modal
-        visible={modalVisible}
-        title={modalSneaker.TITLE}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        footer={[
-          <Button
-            key="submit"
-            type="primary"
-            loading={modalLoading}
-            onClick={() => handleCancel()}
-          >
-            Close
-          </Button>
-        ]}
-      >
-        <List
-          itemLayout="horizontal"
-          dataSource={modalData}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                }
-                title={<Tag color="red">{item.TITLE}</Tag>}
-              />
-            </List.Item>
-          )}
-        />
-      </Modal>
     </div>
   )
 }

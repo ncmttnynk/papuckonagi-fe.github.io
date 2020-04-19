@@ -18,35 +18,38 @@ import { addNewSneaker } from './../../services/sneaker-service'
 const { Option } = Select
 
 const SneakerAdd = () => {
-  const [brandForm] = Form.useForm()
+  const [sneakerForm] = Form.useForm()
   const [brandList, setBrandList] = useState([])
+  const [formLoading, setFormLoading] = useState(false)
 
   const layout = {
     labelCol: {
       span: 4
     },
     wrapperCol: {
-      span: 16
+      span: 12
     }
   }
   const tailLayout = {
     wrapperCol: {
-      offset: 18
+      offset: 12
     }
+  }
+
+  const gridStyle = {
+    width: '100%'
   }
 
   const getBrand = async () => {
     const { data } = await getBrandList()
     if (data.isSuccess) {
-      const list = []
-      data.result.forEach((brand) => {
-        const item = {
-          title: brand.TITLE,
-          key: brand.ID
-        }
-        list.push(item)
+      setBrandList(data.result)
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
       })
-      setBrandList(list)
     }
   }
 
@@ -55,29 +58,37 @@ const SneakerAdd = () => {
   }, [])
 
   const onFinish = async (values) => {
-    const data = {
+    setFormLoading(true)
+    const postData = {
       CREATED_BY: values.createdBy,
       TITLE: values.title,
       COLOR: values.color,
       BRAND_ID: values.brand
     }
-    const response = await addNewSneaker(data)
-    if (response.data.isSuccess) {
+    const { data } = await addNewSneaker(postData)
+    if (data.isSuccess) {
       notification.success({
         message: 'Success',
         description: `${data.TITLE} added successfully!`,
         placement: 'topLeft'
       })
-      brandForm.resetFields()
+      sneakerForm.resetFields()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
     }
+    setFormLoading(false)
   }
 
   const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo)
-  }
-
-  const gridStyle = {
-    width: '100%'
+    notification.warning({
+      message: 'Error',
+      description: 'Validate form!',
+      placement: 'topLeft'
+    })
   }
 
   return (
@@ -97,8 +108,8 @@ const SneakerAdd = () => {
             <Card.Grid style={gridStyle}>
               <Form
                 {...layout}
-                form={brandForm}
-                name="brandForm"
+                form={sneakerForm}
+                name="sneakerForm"
                 onFinish={onFinish}
                 initialValues={{
                   createdBy: 'ncmttnynk'
@@ -142,8 +153,8 @@ const SneakerAdd = () => {
                   <Select placeholder="Select a brand" allowClear>
                     {brandList.map((item) => {
                       return (
-                        <Option key={item.key} value={item.key}>
-                          {item.title}
+                        <Option key={item.ID} value={item.ID}>
+                          {item.TITLE}
                         </Option>
                       )
                     })}
@@ -162,7 +173,19 @@ const SneakerAdd = () => {
                   <Input />
                 </Form.Item>
                 <Form.Item {...tailLayout}>
-                  <Button type="primary" htmlType="submit">
+                  <Button
+                    danger
+                    loading={formLoading}
+                    htmlType="button"
+                    onClick={() => sneakerForm.resetFields()}
+                  >
+                    Reset
+                  </Button>{' '}
+                  <Button
+                    loading={formLoading}
+                    type="primary"
+                    htmlType="submit"
+                  >
                     Submit
                   </Button>
                 </Form.Item>

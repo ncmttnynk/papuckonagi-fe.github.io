@@ -17,3 +17,7 @@ export const updateSneaker = async (data) => {
 export const addNewSneaker = async (data) => {
   return await axios.post(`${API_BASE}/sneaker`, data)
 }
+
+export const deleteSneaker = async (data, modifiedBy) => {
+  return await axios.delete(`${API_BASE}/sneaker/${data.ID}/${modifiedBy}`)
+}
