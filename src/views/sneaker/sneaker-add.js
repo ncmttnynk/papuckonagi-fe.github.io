@@ -39,7 +39,7 @@ const SneakerAdd = () => {
     const { data } = await getBrandList()
     if (data.isSuccess) {
       const list = []
-      data.result.map((brand) => {
+      data.result.forEach((brand) => {
         const item = {
           title: brand.TITLE,
           key: brand.ID

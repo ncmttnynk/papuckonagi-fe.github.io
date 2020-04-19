@@ -26,11 +26,7 @@ import {
   PlusOutlined
 } from '@ant-design/icons'
 
-import {
-  getBrandList,
-  updateBrand,
-  deleteBrand
-} from './../../services/brand-service'
+import { updateBrand, deleteBrand } from './../../services/brand-service'
 import {
   getSneakerByBrandId,
   getSneakerList
@@ -236,79 +232,79 @@ const SneakerList = () => {
         return <Checkbox checked={record.IS_DELETED ? true : false} />
       },
       key: 'IS_DELETED'
+    },
+    {
+      title: 'ACTION',
+      dataIndex: 'operation',
+      key: 'ACTION',
+      render: (_, record) => {
+        const editable = isEditing(record)
+        return editable ? (
+          <div key={Math.random()}>
+            <Tooltip title="Save">
+              <Button
+                onClick={() => save(record.ID)}
+                style={{
+                  marginRight: 8
+                }}
+                key={Math.random()}
+                type="primary"
+                shape="circle"
+                icon={<SaveOutlined />}
+              />
+            </Tooltip>
+            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+              <Tooltip title="Cancel">
+                <Button
+                  key={Math.random()}
+                  type="primary"
+                  shape="circle"
+                  icon={<MinusCircleOutlined />}
+                />
+              </Tooltip>
+            </Popconfirm>
+          </div>
+        ) : (
+          <Space size="middle">
+            <Tooltip title="Edit">
+              <Button
+                key={Math.random()}
+                type="primary"
+                shape="circle"
+                icon={<SearchOutlined />}
+                disabled={editingKey !== ''}
+                onClick={() => edit(record)}
+              />
+            </Tooltip>
+            <Popconfirm
+              title="Sure to delete?"
+              disabled={record.IS_DELETED}
+              onConfirm={() => deleteData(record)}
+            >
+              <Tooltip title="Delete">
+                <Button
+                  key={Math.random()}
+                  type="primary"
+                  shape="circle"
+                  disabled={editingKey !== '' || record.IS_DELETED}
+                  icon={<DeleteOutlined />}
+                />
+              </Tooltip>
+            </Popconfirm>
+            <Tooltip title="Show Brand`s Sneakers">
+              <Button
+                key={Math.random()}
+                type="primary"
+                shape="circle"
+                disabled={editingKey !== '' || record.IS_DELETED}
+                icon={<PlusOutlined />}
+                onClick={() => showModal(record)}
+              />
+            </Tooltip>
+          </Space>
+        )
+      }
     }
-    // {
-    //   title: 'ACTION',
-    //   dataIndex: 'operation',
-    //   key: 'ACTION',
-    //   render: (_, record) => {
-    //     const editable = isEditing(record)
-    //     return editable ? (
-    //       <div key={Math.random()}>
-    //         <Tooltip title="Save">
-    //           <Button
-    //             onClick={() => save(record.ID)}
-    //             style={{
-    //               marginRight: 8
-    //             }}
-    //             key={Math.random()}
-    //             type="primary"
-    //             shape="circle"
-    //             icon={<SaveOutlined />}
-    //           />
-    //         </Tooltip>
-    //         <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-    //           <Tooltip title="Cancel">
-    //             <Button
-    //               key={Math.random()}
-    //               type="primary"
-    //               shape="circle"
-    //               icon={<MinusCircleOutlined />}
-    //             />
-    //           </Tooltip>
-    //         </Popconfirm>
-    //       </div>
-    //     ) : (
-    //       <Space size="middle">
-    //         <Tooltip title="Edit">
-    //           <Button
-    //             key={Math.random()}
-    //             type="primary"
-    //             shape="circle"
-    //             icon={<SearchOutlined />}
-    //             disabled={editingKey !== ''}
-    //             onClick={() => edit(record)}
-    //           />
-    //         </Tooltip>
-    //         <Popconfirm
-    //           title="Sure to delete?"
-    //           disabled={record.IS_DELETED}
-    //           onConfirm={() => deleteData(record)}
-    //         >
-    //           <Tooltip title="Delete">
-    //             <Button
-    //               key={Math.random()}
-    //               type="primary"
-    //               shape="circle"
-    //               disabled={editingKey !== '' || record.IS_DELETED}
-    //               icon={<DeleteOutlined />}
-    //             />
-    //           </Tooltip>
-    //         </Popconfirm>
-    //         <Tooltip title="Show Brand`s Sneakers">
-    //           <Button
-    //             key={Math.random()}
-    //             type="primary"
-    //             shape="circle"
-    //             disabled={editingKey !== '' || record.IS_DELETED}
-    //             icon={<PlusOutlined />}
-    //             onClick={() => showModal(record)}
-    //           />
-    //         </Tooltip>
-    //       </Space>
-    //     )
-    //   }
-    // }
   ]
   const mergedColumns = columns.map((col) => {
     if (!col.editable) {
