@@ -16,7 +16,7 @@ import {
   Modal,
   Statistic,
   List,
-  Avatar
+  notification
 } from 'antd'
 import {
   SearchOutlined,
@@ -45,15 +45,29 @@ const EditableCell = ({
   children,
   ...restProps
 }) => {
-  const inputNode =
-    inputType === 'checkbox' ? (
-      <Checkbox checked={record.IS_DELETED ? true : false} />
-    ) : (
-      <Input />
-    )
-  return (
-    <td {...restProps}>
-      {editing ? (
+  var inputNode = ''
+  switch (inputType) {
+    case 'checkbox':
+      inputNode = (
+        <Form.Item
+          name={dataIndex}
+          valuePropName="checked"
+          style={{
+            margin: 0
+          }}
+          rules={[
+            {
+              required: true,
+              message: `Please Input ${title}!`
+            }
+          ]}
+        >
+          <Checkbox />
+        </Form.Item>
+      )
+      break
+    case 'input':
+      inputNode = (
         <Form.Item
           name={dataIndex}
           style={{
@@ -66,13 +80,14 @@ const EditableCell = ({
             }
           ]}
         >
-          {inputNode}
+          <Input />
         </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  )
+      )
+      break
+    default:
+      break
+  }
+  return <td {...restProps}>{editing ? inputNode : children}</td>
 }
 
 const BrandList = () => {
@@ -85,11 +100,16 @@ const BrandList = () => {
   const [modalSneaker, setModalSneaker] = useState({})
   const [modalData, setModalData] = useState([])
 
+  const gridStyle = {
+    width: '100%'
+  }
+
   const showModal = async (key) => {
     const { data } = await getSneakerByBrandId(key.ID)
     setModalData(data.result)
     setModalSneaker(key)
     setModalVisible(true)
+    setLoading(true)
   }
 
   const handleOk = () => {
@@ -102,6 +122,7 @@ const BrandList = () => {
 
   const handleCancel = () => {
     setModalVisible(false)
+    setLoading(false)
   }
 
   const isEditing = (record) => record.ID === editingKey
@@ -117,27 +138,47 @@ const BrandList = () => {
 
   const getList = async () => {
     setLoading(true)
-    const response = await getBrandList()
-    setData(response.data.result)
+    const { data } = await getBrandList()
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: 'Sneaker list get successfully!',
+        placement: 'topLeft'
+      })
+      setData(data.result)
+      setLoading(false)
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
+  }
+
+  const deleteData = async (key) => {
+    setLoading(true)
+    const { data } = await deleteBrand(key, 'ncmttnynk')
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: 'Brand deleted succesfully!',
+        placement: 'topLeft'
+      })
+      getList()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
     setLoading(false)
   }
 
   useEffect(() => {
     getList()
   }, [])
-
-  const deleteData = async (key) => {
-    setLoading(true)
-    const response = await deleteBrand(key, 'ncmttnynk')
-    if (response.data.isSuccess) {
-      getList()
-    }
-    setLoading(false)
-  }
-
-  const gridStyle = {
-    width: '100%'
-  }
 
   const save = async (key) => {
     setLoading(true)
@@ -148,12 +189,24 @@ const BrandList = () => {
       ID: key,
       TITLE: row.TITLE,
       MODIFIED_BY: row.MODIFIED_BY,
-      IS_DELETED: false
+      IS_DELETED: row.IS_DELETED
     }
-    const response = await updateBrand(putData)
-    if (response.data.isSuccess) {
+    const { data } = await updateBrand(putData)
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: `${row.TITLE} updated successfully!`,
+        placement: 'topLeft'
+      })
       getList()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
     }
+    setLoading(false)
     setEditingKey('')
   }
   const columns = [
@@ -162,20 +215,23 @@ const BrandList = () => {
       dataIndex: 'ID',
       editable: false,
       key: 'ID',
-      defaultSortOrder: 'ascend',
-      sorter: (a, b) => a.ID - b.ID
+      sorter: (a, b) => a.ID - b.ID,
+      align: 'center',
+      width: '5%'
     },
     {
       title: 'TITLE',
       dataIndex: 'TITLE',
       editable: true,
-      key: 'TITLE'
+      key: 'TITLE',
+      align: 'center'
     },
     {
       title: 'CREATED BY',
       dataIndex: 'CREATED_BY',
       editable: false,
-      key: 'CREATED_BY'
+      key: 'CREATED_BY',
+      align: 'center'
     },
     {
       title: 'CREATED DATE',
@@ -183,19 +239,19 @@ const BrandList = () => {
       render: (_, record) => {
         return (
           <span>
-            {moment(new Date(record.CREATED_DATE)).format(
-              'DD.MM.YYYY, h:mm:ss'
-            )}
+            {moment(new Date(record.CREATED_DATE)).format('DD.MM.YYYY')}
           </span>
         )
       },
-      key: 'CREATED_DATE'
+      key: 'CREATED_DATE',
+      align: 'center'
     },
     {
       title: 'MODIFIED BY',
       dataIndex: 'MODIFIED_BY',
       editable: true,
-      key: 'MODIFIED_BY'
+      key: 'MODIFIED_BY',
+      align: 'center'
     },
     {
       title: 'MODIFIED DATE',
@@ -204,14 +260,13 @@ const BrandList = () => {
         return (
           <span>
             {record.MODIFIED_DATE
-              ? moment(new Date(record.MODIFIED_DATE)).format(
-                  'DD.MM.YYYY, h:mm:ss'
-                )
+              ? moment(new Date(record.MODIFIED_DATE)).format('DD.MM.YYYY')
               : ''}
           </span>
         )
       },
-      key: 'MODIFIED_DATE'
+      key: 'MODIFIED_DATE',
+      align: 'center'
     },
     {
       title: 'IS DELETED',
@@ -220,7 +275,8 @@ const BrandList = () => {
       render: (_, record) => {
         return <Checkbox checked={record.IS_DELETED ? true : false} />
       },
-      key: 'IS_DELETED'
+      key: 'IS_DELETED',
+      align: 'center'
     },
     {
       title: 'ACTION',
@@ -292,7 +348,8 @@ const BrandList = () => {
             </Tooltip>
           </Space>
         )
-      }
+      },
+      align: 'center'
     }
   ]
   const mergedColumns = columns.map((col) => {
@@ -304,7 +361,7 @@ const BrandList = () => {
       ...col,
       onCell: (record) => ({
         record,
-        inputType: col.dataIndex === 'IS_DELETED' ? 'checkbox' : 'text',
+        inputType: col.dataIndex === 'IS_DELETED' ? 'checkbox' : 'input',
         dataIndex: col.dataIndex,
         title: col.title,
         editing: isEditing(record)
@@ -375,12 +432,7 @@ const BrandList = () => {
           dataSource={modalData}
           renderItem={(item) => (
             <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
-                }
-                title={<Tag color="red">{item.TITLE}</Tag>}
-              />
+              <List.Item.Meta title={<Tag color="black">{item.TITLE}</Tag>} />
             </List.Item>
           )}
         />

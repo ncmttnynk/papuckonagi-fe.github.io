@@ -18,14 +18,13 @@ const Home = () => (
     <Layout>
       <HeaderMenu />
       <Layout>
-        <SiderMenu />
         <Layout style={{ padding: '0 24px 24px' }}>
           <Content
             className="site-layout-background"
             style={{
               padding: 24,
               margin: 0,
-              minHeight: 280
+              minHeight: 960
             }}
           >
             <Route exact path="/brand-add" component={BrandAdd} />
@@ -34,6 +33,7 @@ const Home = () => (
             <Route path="/sneaker-list" component={SneakerList} />
           </Content>
         </Layout>
+        <SiderMenu />
       </Layout>
     </Layout>
   </Router>

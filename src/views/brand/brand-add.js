@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Form,
   Input,
@@ -15,43 +15,51 @@ import { addNewBrand } from './../../services/brand-service'
 
 const BrandAdd = () => {
   const [brandForm] = Form.useForm()
+  const [formLoading, setFormLoading] = useState(false)
 
   const layout = {
     labelCol: {
       span: 4
     },
     wrapperCol: {
-      span: 16
+      span: 12
     }
   }
   const tailLayout = {
     wrapperCol: {
-      offset: 18
+      offset: 12
     }
-  }
-
-  const onFinish = async (values) => {
-    const data = {
-      CREATED_BY: values.createdBy,
-      TITLE: values.title
-    }
-    const response = await addNewBrand(data)
-    if (response.data.isSuccess) {
-      notification.success({
-        message: 'Success',
-        description: `${data.TITLE} added successfully!`,
-        placement: 'topLeft'
-      })
-      brandForm.resetFields()
-    }
-  }
-
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo)
   }
 
   const gridStyle = {
     width: '100%'
+  }
+  const onFinish = async (values) => {
+    setFormLoading(true)
+    const postData = {
+      CREATED_BY: values.createdBy,
+      TITLE: values.title
+    }
+    const { data } = await addNewBrand(postData)
+    if (data.isSuccess) {
+      notification.success({
+        message: 'Success',
+        description: `${data.result.TITLE} added successfully!`,
+        placement: 'topLeft'
+      })
+      brandForm.resetFields()
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
+    setFormLoading(false)
+  }
+
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo)
   }
 
   return (
@@ -104,7 +112,19 @@ const BrandAdd = () => {
                   <Input />
                 </Form.Item>
                 <Form.Item {...tailLayout}>
-                  <Button type="primary" htmlType="submit">
+                  <Button
+                    danger
+                    loading={formLoading}
+                    htmlType="button"
+                    onClick={() => brandForm.resetFields()}
+                  >
+                    Reset
+                  </Button>{' '}
+                  <Button
+                    loading={formLoading}
+                    type="primary"
+                    htmlType="submit"
+                  >
                     Submit
                   </Button>
                 </Form.Item>

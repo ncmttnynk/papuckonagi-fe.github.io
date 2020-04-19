@@ -200,12 +200,17 @@ const SneakerList = () => {
   const save = async (key) => {
     setLoading(true)
     const row = await form.validateFields()
-    console.log(row)
+
+    const selectedBrand = brandListData.filter(
+      (item) =>
+        item.TITLE === row['BRAND.TITLE'] || item.ID === row['BRAND.TITLE']
+    )[0]
+
     const putData = {
       ID: key.ID,
       TITLE: row.TITLE,
       COLOR: row.COLOR,
-      BRAND_ID: row['BRAND.TITLE'],
+      BRAND_ID: selectedBrand.ID,
       MODIFIED_BY: row.MODIFIED_BY,
       IS_DELETED: row.IS_DELETED
     }
@@ -270,9 +275,9 @@ const SneakerList = () => {
       dataIndex: 'CREATED_DATE',
       render: (_, record) => {
         return (
-          <span>
+          <Tag color="blue">
             {moment(new Date(record.CREATED_DATE)).format('DD.MM.YYYY')}
-          </span>
+          </Tag>
         )
       },
       key: 'CREATED_DATE',

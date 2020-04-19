@@ -69,7 +69,7 @@ const SneakerAdd = () => {
     if (data.isSuccess) {
       notification.success({
         message: 'Success',
-        description: `${data.TITLE} added successfully!`,
+        description: `${data.result.TITLE} added successfully!`,
         placement: 'topLeft'
       })
       sneakerForm.resetFields()
