@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { PageHeader, Tag, Row, Statistic, Button } from 'antd'
 import SocketIO from 'socket.io-client'
 const SOCKET_URL = 'http://localhost:3005'

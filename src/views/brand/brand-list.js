@@ -182,16 +182,12 @@ const BrandList = () => {
     setLoading(false)
   }
 
-  const socketConnection = () => {
+  useEffect(() => {
     socket.on('getBrand', (message) => {
       if (message) {
         getList()
       }
     })
-  }
-
-  useEffect(() => {
-    socketConnection()
     getList()
   }, [])
 
