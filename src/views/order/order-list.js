@@ -12,34 +12,28 @@ import {
   Tag,
   Row,
   Col,
+  notification,
   Card,
-  Modal,
   Statistic,
-  List,
-  notification
+  Select
 } from 'antd'
 import {
   SearchOutlined,
   MinusCircleOutlined,
   SaveOutlined,
-  DeleteOutlined,
-  PlusOutlined
+  DeleteOutlined
 } from '@ant-design/icons'
 
+import { getBrandList } from './../../services/brand-service'
 import {
-  getBrandList,
-  updateBrand,
-  deleteBrand
-} from './../../services/brand-service'
-import { getSneakerByBrandId } from './../../services/sneaker-service'
+  deleteSneaker,
+  updateSneaker,
+  getSneakerList
+} from './../../services/sneaker-service'
 
 import * as moment from 'moment'
 
-import { API_BASE } from '../../const'
-
-import SocketIO from 'socket.io-client'
-
-let socket = SocketIO(API_BASE)
+const { Option } = Select
 
 const EditableCell = ({
   editing,
@@ -49,6 +43,7 @@ const EditableCell = ({
   record,
   index,
   children,
+  brandListData,
   ...restProps
 }) => {
   var inputNode = ''
@@ -90,45 +85,47 @@ const EditableCell = ({
         </Form.Item>
       )
       break
+    case 'select':
+      inputNode = (
+        <Form.Item
+          name={dataIndex}
+          style={{
+            margin: 0
+          }}
+          rules={[
+            {
+              required: true,
+              message: `Please Input ${title}!`
+            }
+          ]}
+        >
+          <Select placeholder="Select a brand" allowClear>
+            {brandListData.map((item) => {
+              return (
+                <Option key={item.ID} value={item.ID}>
+                  {item.TITLE}
+                </Option>
+              )
+            })}
+          </Select>
+        </Form.Item>
+      )
+      break
     default:
       break
   }
   return <td {...restProps}>{editing ? inputNode : children}</td>
 }
 
-const BrandList = () => {
+const OrderList = () => {
   const [form] = Form.useForm()
   const [data, setData] = useState([])
+  const [brandListData, setBrandListData] = useState([])
   const [editingKey, setEditingKey] = useState('')
   const [loading, setLoading] = useState(false)
-  const [modalLoading, setModalLoading] = useState(false)
-  const [modalVisible, setModalVisible] = useState(false)
-  const [modalSneaker, setModalSneaker] = useState({})
-  const [modalData, setModalData] = useState([])
 
   const gridStyle = {
     width: '100%'
-  }
-
-  const showModal = async (key) => {
-    const { data } = await getSneakerByBrandId(key.ID)
-    setModalData(data.result)
-    setModalSneaker(key)
-    setModalVisible(true)
-    setLoading(true)
-  }
-
-  const handleOk = () => {
-    setModalLoading(true)
-    setTimeout(() => {
-      setModalLoading(false)
-      setModalVisible(false)
-    }, 3000)
-  }
-
-  const handleCancel = () => {
-    setModalVisible(false)
-    setLoading(false)
   }
 
   const isEditing = (record) => record.ID === editingKey
@@ -144,7 +141,7 @@ const BrandList = () => {
 
   const getList = async () => {
     setLoading(true)
-    const { data } = await getBrandList()
+    const { data } = await getSneakerList()
     if (data.isSuccess) {
       notification.success({
         message: 'Success',
@@ -162,16 +159,34 @@ const BrandList = () => {
     }
   }
 
+  const getBrand = async () => {
+    const { data } = await getBrandList()
+    if (data.isSuccess) {
+      setBrandListData(data.result)
+    } else {
+      notification.warning({
+        message: 'Error',
+        description: `${data.error}!`,
+        placement: 'topLeft'
+      })
+    }
+  }
+
+  useEffect(() => {
+    getList()
+    getBrand()
+  }, [])
+
   const deleteData = async (key) => {
     setLoading(true)
-    const { data } = await deleteBrand(key, 'ncmttnynk')
-    socket.emit('deleteBrand', data.isSuccess)
+    const { data } = await deleteSneaker(key, 'ncmttnynk')
     if (data.isSuccess) {
       notification.success({
         message: 'Success',
-        description: 'Brand deleted succesfully!',
+        description: 'Sneaker deleted succesfully!',
         placement: 'topLeft'
       })
+      getList()
     } else {
       notification.warning({
         message: 'Error',
@@ -182,38 +197,31 @@ const BrandList = () => {
     setLoading(false)
   }
 
-  const socketConnection = () => {
-    socket.on('getBrand', (message) => {
-      if (message) {
-        getList()
-      }
-    })
-  }
-
-  useEffect(() => {
-    socketConnection()
-    getList()
-  }, [])
-
   const save = async (key) => {
     setLoading(true)
-
     const row = await form.validateFields()
 
+    const selectedBrand = brandListData.filter(
+      (item) =>
+        item.TITLE === row['BRAND.TITLE'] || item.ID === row['BRAND.TITLE']
+    )[0]
+
     const putData = {
-      ID: key,
+      ID: key.ID,
       TITLE: row.TITLE,
+      COLOR: row.COLOR,
+      BRAND_ID: selectedBrand.ID,
       MODIFIED_BY: row.MODIFIED_BY,
       IS_DELETED: row.IS_DELETED
     }
-    const { data } = await updateBrand(putData)
-    socket.emit('updateBrand', data.isSuccess)
+    const { data } = await updateSneaker(putData)
     if (data.isSuccess) {
       notification.success({
         message: 'Success',
         description: `${row.TITLE} updated successfully!`,
         placement: 'topLeft'
       })
+      getList()
     } else {
       notification.warning({
         message: 'Error',
@@ -231,14 +239,28 @@ const BrandList = () => {
       editable: false,
       key: 'ID',
       sorter: (a, b) => a.ID - b.ID,
-      align: 'center',
-      width: '5%'
+      width: '5%',
+      align: 'center'
     },
     {
       title: 'TITLE',
       dataIndex: 'TITLE',
       editable: true,
       key: 'TITLE',
+      align: 'center'
+    },
+    {
+      title: 'COLOR',
+      dataIndex: 'COLOR',
+      editable: true,
+      key: 'COLOR',
+      align: 'center'
+    },
+    {
+      title: 'BRAND',
+      dataIndex: 'BRAND.TITLE',
+      editable: true,
+      key: 'BRAND',
       align: 'center'
     },
     {
@@ -253,9 +275,9 @@ const BrandList = () => {
       dataIndex: 'CREATED_DATE',
       render: (_, record) => {
         return (
-          <span>
+          <Tag color="blue">
             {moment(new Date(record.CREATED_DATE)).format('DD.MM.YYYY')}
-          </span>
+          </Tag>
         )
       },
       key: 'CREATED_DATE',
@@ -288,7 +310,7 @@ const BrandList = () => {
       dataIndex: 'IS_DELETED',
       editable: true,
       render: (_, record) => {
-        return <Checkbox checked={record.IS_DELETED ? true : false} />
+        return <Checkbox checked={record.IS_DELETED} />
       },
       key: 'IS_DELETED',
       align: 'center'
@@ -303,7 +325,7 @@ const BrandList = () => {
           <div key={Math.random()}>
             <Tooltip title="Save">
               <Button
-                onClick={() => save(record.ID)}
+                onClick={() => save(record)}
                 style={{
                   marginRight: 8
                 }}
@@ -351,16 +373,6 @@ const BrandList = () => {
                 />
               </Tooltip>
             </Popconfirm>
-            <Tooltip title="Show Brand`s Sneakers">
-              <Button
-                key={Math.random()}
-                type="primary"
-                shape="circle"
-                disabled={editingKey !== '' || record.IS_DELETED}
-                icon={<PlusOutlined />}
-                onClick={() => showModal(record)}
-              />
-            </Tooltip>
           </Space>
         )
       },
@@ -376,17 +388,23 @@ const BrandList = () => {
       ...col,
       onCell: (record) => ({
         record,
-        inputType: col.dataIndex === 'IS_DELETED' ? 'checkbox' : 'input',
+        inputType:
+          col.dataIndex === 'IS_DELETED'
+            ? 'checkbox'
+            : col.dataIndex === 'BRAND.TITLE'
+            ? 'select'
+            : 'input',
         dataIndex: col.dataIndex,
         title: col.title,
-        editing: isEditing(record)
+        editing: isEditing(record),
+        brandListData: brandListData
       })
     }
   })
   return (
     <div>
       <PageHeader
-        title="BRAND"
+        title="SNEAKER"
         className="site-page-header"
         tags={<Tag color="blue">List</Tag>}
         avatar={{
@@ -400,7 +418,7 @@ const BrandList = () => {
       </PageHeader>
       <Row>
         <Col span={24}>
-          <Card title="Add New Brand" bordered={false}>
+          <Card title="Sneaker List" bordered={false}>
             <Card.Grid style={gridStyle}>
               <Form form={form} component={false}>
                 <Table
@@ -426,34 +444,8 @@ const BrandList = () => {
           </Card>
         </Col>
       </Row>
-      <Modal
-        visible={modalVisible}
-        title={modalSneaker.TITLE}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        footer={[
-          <Button
-            key="submit"
-            type="primary"
-            loading={modalLoading}
-            onClick={() => handleCancel()}
-          >
-            Close
-          </Button>
-        ]}
-      >
-        <List
-          itemLayout="horizontal"
-          dataSource={modalData}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta title={<Tag color="black">{item.TITLE}</Tag>} />
-            </List.Item>
-          )}
-        />
-      </Modal>
     </div>
   )
 }
 
-export default BrandList
+export default OrderList

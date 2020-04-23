@@ -53,6 +53,41 @@ const SiderMenu = () => (
           <span>Add New</span>
           <Link to="/sneaker-add" />
         </Menu.Item>
+      </SubMenu>{' '}
+      <SubMenu
+        key="sub3"
+        title={
+          <span>
+            <YuqueFilled />
+            Order
+          </span>
+        }
+      >
+        <Menu.Item key="5">
+          <CopyFilled />
+          <span>List</span>
+          <Link to="/order-list" />
+        </Menu.Item>
+        <Menu.Item key="6">
+          <EditFilled />
+          <span>Add New</span>
+          <Link to="/order-add" />
+        </Menu.Item>
+      </SubMenu>
+      <SubMenu
+        key="sub4"
+        title={
+          <span>
+            <YuqueFilled />
+            Socket
+          </span>
+        }
+      >
+        <Menu.Item key="7">
+          <EditFilled />
+          <span>Socket Test</span>
+          <Link to="/socket-test" />
+        </Menu.Item>
       </SubMenu>
     </Menu>
   </Sider>

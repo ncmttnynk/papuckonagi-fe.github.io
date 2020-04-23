@@ -11,6 +11,11 @@ import BrandList from '../brand/brand-list'
 import SneakerAdd from '../sneaker/sneaker-add'
 import SneakerList from '../sneaker/sneaker-list'
 
+import OrderAdd from '../order/order-add'
+import OrderList from '../order/order-list'
+
+import SocketTest from '../socket/socket-test'
+
 const { Content } = Layout
 
 const Home = () => (
@@ -31,6 +36,9 @@ const Home = () => (
             <Route path="/brand-list" component={BrandList} />
             <Route path="/sneaker-add" component={SneakerAdd} />
             <Route path="/sneaker-list" component={SneakerList} />
+            <Route path="/order-add" component={OrderAdd} />
+            <Route path="/order-list" component={OrderList} />
+            <Route path="/socket-test" component={SocketTest} />
           </Content>
         </Layout>
         <SiderMenu />
