@@ -12,8 +12,11 @@ import {
 } from 'antd'
 
 import { addNewBrand } from './../../services/brand-service'
+import { API_BASE } from '../../const'
+
 import SocketIO from 'socket.io-client'
-const SOCKET_URL = 'http://localhost:3005'
+
+let socket = SocketIO(API_BASE)
 
 const BrandAdd = () => {
   const [brandForm] = Form.useForm()
@@ -46,7 +49,6 @@ const BrandAdd = () => {
 
     const { data } = await addNewBrand(postData)
 
-    let socket = SocketIO(SOCKET_URL)
     socket.emit('addNewBrand', data.isSuccess)
     if (data.isSuccess) {
       notification.success({
