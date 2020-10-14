@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/papuckonagi-fe.github.io/static/css/main.5ecd60fb.chunk.css",
+    "main.js": "/papuckonagi-fe.github.io/static/js/main.8d0fb9e3.chunk.js",
+    "main.js.map": "/papuckonagi-fe.github.io/static/js/main.8d0fb9e3.chunk.js.map",
+    "runtime-main.js": "/papuckonagi-fe.github.io/static/js/runtime-main.f03f1c56.js",
+    "runtime-main.js.map": "/papuckonagi-fe.github.io/static/js/runtime-main.f03f1c56.js.map",
+    "static/css/2.6feb3358.chunk.css": "/papuckonagi-fe.github.io/static/css/2.6feb3358.chunk.css",
+    "static/js/2.1d93e24b.chunk.js": "/papuckonagi-fe.github.io/static/js/2.1d93e24b.chunk.js",
+    "static/js/2.1d93e24b.chunk.js.map": "/papuckonagi-fe.github.io/static/js/2.1d93e24b.chunk.js.map",
+    "index.html": "/papuckonagi-fe.github.io/index.html",
+    "precache-manifest.88ebd3e10b84b44bbc1515790405959f.js": "/papuckonagi-fe.github.io/precache-manifest.88ebd3e10b84b44bbc1515790405959f.js",
+    "service-worker.js": "/papuckonagi-fe.github.io/service-worker.js",
+    "static/css/2.6feb3358.chunk.css.map": "/papuckonagi-fe.github.io/static/css/2.6feb3358.chunk.css.map",
+    "static/css/main.5ecd60fb.chunk.css.map": "/papuckonagi-fe.github.io/static/css/main.5ecd60fb.chunk.css.map",
+    "static/js/2.1d93e24b.chunk.js.LICENSE.txt": "/papuckonagi-fe.github.io/static/js/2.1d93e24b.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.f03f1c56.js",
+    "static/css/2.6feb3358.chunk.css",
+    "static/js/2.1d93e24b.chunk.js",
+    "static/css/main.5ecd60fb.chunk.css",
+    "static/js/main.8d0fb9e3.chunk.js"
+  ]
+}
